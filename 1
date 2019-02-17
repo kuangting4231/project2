@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+/**
+* 去掉字符串中注释部分
+**/
+void remove_comment(char *buf)
+{
+  size_t off;
+  char *s, *p, *t, *tmp;
+  char *sss="adas\"d/**/\"*a\"//s/**/d*/"; // 这里主要测试字符串内带注释字符
+
+  for (s = p = buf; *p != '\0'; p++) {
+    switch(*p) {
+      case '"': // 直接循环到下一个 "
+      case '\'': /* 直接循环到下一个 ' */
+          // 下面找到字符串结束位置,避免匹配字符串内部的 /* 或者 //
+        for (tmp = p + 1; *tmp != *p; tmp++) {
+          if (*tmp == '\\') {
+            tmp++; /* 跳过转义位置,因为转义字符2个位置代表一个字符 */
+          }
+        }//阿萨德撒
+
+        // while(1) {
+          // if ( NULL != (t = strchr(tmp, '\\')) ) {
+        // printf("%c\n", *tmp);
+            // tmp = t + 2; // 有转义字符
+          // }
+          // if ( NULL != (t = strchr(tmp, *p)) ) {
+            // tmp = t + 1; // 有要找的字符
+            // break;
+          // }
+        // }
+        // printf("%c\n", *(tmp-2));
+        // exit(0);
+        // while ( NULL != (t = strchr(tmp, *p)) ) {
+          // tmp = t + 1; /*每次都从下一个位置找*/
+          // if ( *(t - 1) != '\\' ) {
+            // break; // 这次的符号不是转义，则表示找到真正字符串末尾了
+          // }
+        // }
+
+        off = tmp - p+1/* 计算本次拷贝长度 */;
+        if (off > 1) {
+          strncpy(s, p, off);
+          p += off - 1; // 外面有一个p++,所以这里少加一个
+          s += off;
+        }
+      break;
+
+      case '/':
+        switch ( *(p + 1) ) {
+          case '*': // 组成 /*
+            if (NULL != (t = strstr(p + 1, "*/"))) {
+              p = t + 1; /* 这里把指针指向 /* 结束标记 */
+            }
+          break;
+
+          case '/':  //  组成 //
+            for (tmp = p - 1; 0 != isspace(*tmp); tmp--) {
+            } // /* 这里的循环用于去掉空行注释
+            s -= p - tmp - 1; // s倒退到上一个非空白字符
+            *s++ = '\n'; /* //是单行注释,因此必须有一个换行 */
+
+            while (*p != '\n' && *p != '\r') {
+              p++;//  p指针移到下一个回车换行
+            }
+          break;
+
+          default: // 没有匹配注释字符
+            *s++ = *p;
+          break;
+        }
+      break;
+
+      default: // 没有匹配字符则逐个写
+        *s++ = *p;
+      break;
+    }
+  }
